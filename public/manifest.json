@@ -1,0 +1,17 @@
+{
+  "name": "og-audio-dl",
+  "short_name": "og-audio-dl",
+  "description": "Download audio from any webpage using Open Graph metadata",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

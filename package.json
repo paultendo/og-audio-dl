@@ -1,0 +1,17 @@
+{
+  "name": "og-audio-dl",
+  "version": "1.0.0",
+  "description": "Download audio from any webpage using Open Graph metadata",
+  "main": "src/worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [],
+  "author": "paultendo",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "wrangler": "^4.65.0"
+  }
+}
