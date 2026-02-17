@@ -6,7 +6,7 @@ Websites publish `og:audio` meta tags to tell search engines and social media pl
 
 No scraping. No authentication bypass. No DRM circumvention. No audio ever touches our server. Just reading the metadata that sites already serve to every visitor.
 
-**[Try it live](https://og-audio-dl.paultendo.workers.dev)**
+## **[Use it now at og-audio-dl.paultendo.workers.dev](https://og-audio-dl.paultendo.workers.dev)**
 
 ---
 
