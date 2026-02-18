@@ -223,13 +223,16 @@ async function handleInfo(request) {
     return Response.json({ error: 'Missing ?url= parameter' }, { status: 400 });
   }
 
-  const urlError = validateUrl(targetUrl);
+  // Auto-prepend https:// if no protocol given
+  const normalizedUrl = /^https?:\/\//i.test(targetUrl) ? targetUrl : 'https://' + targetUrl;
+
+  const urlError = validateUrl(normalizedUrl);
   if (urlError) {
     return Response.json({ error: urlError }, { status: 400 });
   }
 
   try {
-    const info = await extractAudioInfo(targetUrl);
+    const info = await extractAudioInfo(normalizedUrl);
     if (!info) {
       return Response.json({ error: 'No og:audio or twitter:player:stream meta tag found on this page' }, { status: 404 });
     }
@@ -1173,15 +1176,22 @@ urlInput.addEventListener('focus', async () => {
   if (urlInput.value.trim()) return;
   try {
     const text = await navigator.clipboard.readText();
-    if (text && text.trim().startsWith('http')) {
-      urlInput.value = text.trim();
+    const t = text ? text.trim() : '';
+    if (t && (t.startsWith('http') || t.includes('.'))) {
+      urlInput.value = t;
       urlInput.select();
     }
   } catch {}
 });
 
+function normalizeUrl(s) {
+  s = s.trim();
+  if (s && !/^https?:\\/\\//i.test(s)) s = 'https://' + s;
+  return s;
+}
+
 function parseUrls(text) {
-  return text.split('\\n').map(s => s.trim()).filter(s => s && s.startsWith('http'));
+  return text.split('\\n').map(s => normalizeUrl(s)).filter(s => s && s.startsWith('http'));
 }
 
 async function fetchOne(url) {
