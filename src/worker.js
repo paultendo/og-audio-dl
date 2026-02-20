@@ -501,26 +501,8 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .subtitle {
     color: #888;
     font-size: 0.875rem;
-    margin-bottom: 1.25rem;
-    line-height: 1.5;
-  }
-
-  .platform-callout {
-    font-size: 0.8125rem;
-    color: #929292;
-    background: #111;
-    border: 1px solid #222;
-    border-left: 3px solid #6ea8fe;
-    border-radius: 6px;
-    padding: 0.625rem 0.875rem;
     margin-bottom: 2rem;
     line-height: 1.5;
-  }
-
-  .platform-callout-label {
-    color: #6ea8fe;
-    font-weight: 600;
-    margin-right: 0.4rem;
   }
 
   .input-group {
@@ -1156,12 +1138,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 <a href="#main-content" class="skip-link">Skip to content</a>
 <main id="main-content" class="container" role="main">
   <h1>og-audio-dl</h1>
-  <p class="subtitle">Download audio from any webpage that uses Open Graph metadata.</p>
-
-  <div class="platform-callout">
-    <span class="platform-callout-label">Enhanced for Suno</span>
-    Artist, lyrics and cover art are automatically embedded as ID3 tags in your downloaded MP3.
-  </div>
+  <p class="subtitle">Download audio from any webpage that uses Open Graph metadata. Suno downloads include artist, lyrics and cover art embedded in the file.</p>
 
   <div class="agree-row">
     <input type="checkbox" id="agree" aria-describedby="agree-desc">
