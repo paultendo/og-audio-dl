@@ -377,6 +377,102 @@ async function extractAudioInfo(url) {
   return result;
 }
 
+/**
+ * Fetch all tracks from a public Suno playlist URL.
+ * Extracts clip IDs from the playlist page HTML, then fetches each clip
+ * from the public studio-api.prod.suno.com/api/clip/{id} endpoint.
+ * No authentication required.
+ */
+async function fetchSunoPlaylist(playlistUrl) {
+  const u = new URL(playlistUrl);
+  if (u.hostname !== 'suno.com' && u.hostname !== 'www.suno.com') return null;
+  const parts = u.pathname.split('/').filter(Boolean);
+  if (parts.length < 2 || parts[0] !== 'playlist') return null;
+
+  const res = await fetch(playlistUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+  });
+  if (!res.ok) throw new Error('Failed to fetch playlist page: HTTP ' + res.status);
+  const html = await res.text();
+
+  // Extract clip UUIDs from CDN MP3 URLs embedded in the page HTML
+  const cdnRe = /cdn1\.suno\.ai\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.mp3/gi;
+  const seen = new Set();
+  let m;
+  while ((m = cdnRe.exec(html)) !== null) {
+    seen.add(m[1]);
+  }
+  if (seen.size === 0) throw new Error('No tracks found in this playlist');
+
+  const ids = [...seen];
+
+  // Fetch clip metadata from public API in parallel
+  const clips = await Promise.all(ids.map(async (id) => {
+    try {
+      const clipRes = await fetch('https://studio-api.prod.suno.com/api/clip/' + id, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+      });
+      if (!clipRes.ok) return { error: 'Clip API returned ' + clipRes.status, id };
+      const clip = await clipRes.json();
+
+      const meta = clip.metadata || {};
+      const title = clip.title || ('Track ' + id.slice(0, 8));
+      const artist = clip.display_name || null;
+      const audioUrl = clip.audio_url || ('https://cdn1.suno.ai/' + id + '.mp3');
+      const image = clip.image_large_url || clip.image_url || null;
+      const lyrics = (meta.prompt || '').trim() || null;
+      const styleTags = (meta.tags || '').trim() || null;
+      const displayTags = (clip.display_tags || '').trim() || null;
+      const year = clip.created_at ? new Date(clip.created_at).getFullYear().toString() : null;
+      const durationMs = typeof meta.duration === 'number' ? Math.round(meta.duration * 1000) : null;
+      const model = clip.major_model_version || null;
+      const filenameBase = artist
+        ? sanitiseFilename(artist) + ' - ' + sanitiseFilename(title)
+        : sanitiseFilename(title);
+      const filename = filenameBase + '.mp3';
+      const pageUrl = 'https://suno.com/song/' + id;
+
+      return { audioUrl, title, artist, lyrics, styleTags, displayTags, year, durationMs, model, filename, image, sourceTag: 'suno-playlist', pageUrl };
+    } catch (err) {
+      return { error: err.message, id };
+    }
+  }));
+
+  return clips;
+}
+
+/**
+ * Handle Suno playlist requests.
+ */
+async function handlePlaylist(request) {
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  if (!checkRateLimit(ip)) {
+    return Response.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 });
+  }
+
+  const url = new URL(request.url);
+  const targetUrl = url.searchParams.get('url');
+  if (!targetUrl) {
+    return Response.json({ error: 'Missing ?url= parameter' }, { status: 400 });
+  }
+
+  let normalizedUrl;
+  try {
+    normalizedUrl = /^https?:\/\//i.test(targetUrl) ? targetUrl : 'https://' + targetUrl;
+    new URL(normalizedUrl);
+  } catch {
+    return Response.json({ error: 'Invalid URL' }, { status: 400 });
+  }
+
+  try {
+    const clips = await fetchSunoPlaylist(normalizedUrl);
+    if (!clips) return Response.json({ error: 'Not a valid Suno playlist URL' }, { status: 400 });
+    return Response.json(clips);
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+}
+
 const BATCH_MAX = 50;
 
 /**
@@ -693,8 +789,13 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     border-radius: 8px;
   }
 
+  .download-btn-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
   .download-btn {
-    width: 100%;
+    flex: 1;
     padding: 0.875rem;
     background: #2563eb;
     color: #fff;
@@ -705,6 +806,19 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     text-decoration: none;
     display: block;
   }
+
+  .meta-btn {
+    padding: 0.875rem 1rem;
+    background: #27272a;
+    color: #a1a1aa;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .meta-btn:hover { background: #3f3f46; color: #e4e4e7; }
 
   .download-btn:hover { opacity: 0.85; }
 
@@ -1249,7 +1363,10 @@ const FRONTEND_HTML = `<!DOCTYPE html>
       <label for="result-filename" class="sr-only">Filename</label>
       <input class="filename-input" type="text" id="result-filename" spellcheck="false" aria-label="Edit filename before download">
     </div>
-    <button class="download-btn" id="result-download" onclick="downloadCurrent()">Download</button>
+    <div class="download-btn-row">
+      <button class="download-btn" id="result-download" onclick="downloadCurrent()">Download</button>
+      <button class="meta-btn" id="result-metadata" onclick="downloadCurrentMetadata()">Metadata</button>
+    </div>
     <details class="lyrics-section" id="result-lyrics-section" style="display:none">
       <summary>Lyrics</summary>
       <pre class="lyrics-text" id="result-lyrics"></pre>
@@ -1585,6 +1702,38 @@ function downloadCurrent() {
   clientDownload(currentAudioUrl, fn, btn, currentData);
 }
 
+function downloadCurrentMetadata() {
+  const fn = document.getElementById('result-filename').value;
+  downloadMetadata(currentData, fn);
+}
+
+function downloadMetadata(meta, baseFilename) {
+  if (!meta) return;
+  const lines = [];
+  if (meta.title)       lines.push('Title: ' + meta.title);
+  if (meta.artist)      lines.push('Artist: ' + meta.artist);
+  if (meta.year)        lines.push('Year: ' + meta.year);
+  if (meta.styleTags)   lines.push('Style prompt: ' + meta.styleTags);
+  if (meta.displayTags) lines.push('Genre: ' + meta.displayTags);
+  if (meta.model)       lines.push('Model: Suno ' + meta.model);
+  if (meta.durationMs)  lines.push('Duration: ' + Math.round(meta.durationMs / 1000) + 's');
+  if (meta.pageUrl)     lines.push('URL: ' + meta.pageUrl);
+  if (meta.lyrics) {
+    lines.push('');
+    lines.push('Lyrics:');
+    lines.push(meta.lyrics);
+  }
+  const txt = lines.join('\n');
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = baseFilename.replace(/\.mp3$/i, '') + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
 function buildResultCard(data, url) {
   const card = document.createElement('div');
   card.className = 'result';
@@ -1607,11 +1756,16 @@ function buildResultCard(data, url) {
     '<div class="filename-row">' +
       '<input class="filename-input" type="text" value="' + escHtml(data.filename) + '" spellcheck="false" aria-label="Filename for ' + escHtml(data.title) + '">' +
     '</div>' +
-    '<button class="download-btn" aria-label="Download ' + escHtml(data.title) + '">Download</button>';
+    '<div class="download-btn-row">' +
+      '<button class="download-btn" aria-label="Download ' + escHtml(data.title) + '">Download</button>' +
+      '<button class="meta-btn" aria-label="Download metadata for ' + escHtml(data.title) + '">Metadata</button>' +
+    '</div>';
 
   const fnInput = card.querySelector('.filename-input');
   const dlBtn = card.querySelector('.download-btn');
+  const metaBtn = card.querySelector('.meta-btn');
   dlBtn.onclick = () => clientDownload(data.audioUrl, fnInput.value, dlBtn, data);
+  metaBtn.onclick = () => downloadMetadata(data, fnInput.value);
 
   saveHistory(data, url);
   return card;
@@ -1619,6 +1773,13 @@ function buildResultCard(data, url) {
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function isSunoPlaylistUrl(url) {
+  try {
+    const u = new URL(/^https?:\/\//i.test(url) ? url : 'https://' + url);
+    return (u.hostname === 'suno.com' || u.hostname === 'www.suno.com') && u.pathname.startsWith('/playlist/');
+  } catch { return false; }
 }
 
 async function lookup() {
@@ -1635,7 +1796,34 @@ async function lookup() {
   batchProgressEl.classList.remove('visible');
   goBtn.disabled = true;
 
-  if (urls.length === 1) {
+  if (urls.length === 1 && isSunoPlaylistUrl(urls[0])) {
+    // Suno playlist - fetch all tracks
+    batchProgressEl.classList.add('visible');
+    resultsListEl.classList.add('visible');
+    batchProgressEl.textContent = 'Fetching playlist...';
+    try {
+      const res = await fetch('/api/playlist?url=' + encodeURIComponent(urls[0]));
+      const results = await res.json();
+      if (!res.ok) throw new Error(results.error || 'Playlist request failed');
+      results.forEach((data) => {
+        if (data.error) {
+          const errCard = document.createElement('div');
+          errCard.className = 'result';
+          errCard.style.display = 'block';
+          errCard.innerHTML = '<div style="color:#ef4444;font-size:0.875rem"><strong>Failed:</strong> ' + escHtml(data.id || '') + '<br>' + escHtml(data.error) + '</div>';
+          resultsListEl.appendChild(errCard);
+        } else {
+          resultsListEl.appendChild(buildResultCard(data, data.pageUrl || urls[0]));
+        }
+      });
+      batchProgressEl.textContent = 'Playlist loaded - ' + results.length + ' tracks.';
+    } catch (err) {
+      batchProgressEl.textContent = '';
+      errorEl.textContent = err.message;
+      errorEl.classList.add('visible');
+    }
+    goBtn.disabled = false;
+  } else if (urls.length === 1) {
     loadingEl.classList.add('visible');
     try {
       const data = await fetchOne(urls[0]);
@@ -1760,6 +1948,10 @@ export default {
 
     if (url.pathname === '/api/batch' && request.method === 'POST') {
       return handleBatch(request);
+    }
+
+    if (url.pathname === '/api/playlist') {
+      return handlePlaylist(request);
     }
 
     // Everything else serves the frontend
