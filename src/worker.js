@@ -377,6 +377,49 @@ async function extractAudioInfo(url) {
   return result;
 }
 
+const BATCH_MAX = 50;
+
+/**
+ * Handle batch API requests.
+ * Accepts a JSON array of URLs, counts as one rate-limit token.
+ */
+async function handleBatch(request) {
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  if (!checkRateLimit(ip)) {
+    return Response.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 });
+  }
+
+  let urls;
+  try {
+    urls = await request.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (!Array.isArray(urls) || urls.length === 0) {
+    return Response.json({ error: 'Body must be a non-empty JSON array of URLs' }, { status: 400 });
+  }
+
+  if (urls.length > BATCH_MAX) {
+    return Response.json({ error: 'Maximum ' + BATCH_MAX + ' URLs per batch request' }, { status: 400 });
+  }
+
+  const results = await Promise.all(urls.map(async (raw) => {
+    const normalized = typeof raw === 'string' && /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+    const urlError = validateUrl(normalized);
+    if (urlError) return { url: raw, error: urlError };
+    try {
+      const info = await extractAudioInfo(normalized);
+      if (!info) return { url: raw, error: 'No og:audio or twitter:player:stream meta tag found on this page' };
+      return info;
+    } catch (err) {
+      return { url: raw, error: err.message };
+    }
+  }));
+
+  return Response.json(results);
+}
+
 /**
  * Handle API info requests.
  */
@@ -1406,6 +1449,17 @@ async function fetchOne(url) {
   return data;
 }
 
+async function fetchBatch(urls) {
+  const res = await fetch('/api/batch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(urls),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Batch request failed');
+  return data;
+}
+
 let currentAudioUrl = '';
 let currentData = null;
 
@@ -1595,28 +1649,30 @@ async function lookup() {
       goBtn.disabled = false;
     }
   } else {
-    // Batch mode
+    // Batch mode - single request, counts as one rate-limit token
     batchProgressEl.classList.add('visible');
     resultsListEl.classList.add('visible');
-    let done = 0;
-    const total = urls.length;
-    batchProgressEl.textContent = 'Fetching 0 / ' + total + '...';
+    batchProgressEl.textContent = 'Fetching ' + urls.length + ' URLs...';
 
-    for (const url of urls) {
-      try {
-        const data = await fetchOne(url);
-        resultsListEl.appendChild(buildResultCard(data, url));
-      } catch (err) {
-        const errCard = document.createElement('div');
-        errCard.className = 'result';
-        errCard.style.display = 'block';
-        errCard.innerHTML = '<div style="color:#ef4444;font-size:0.875rem"><strong>Failed:</strong> ' + escHtml(url) + '<br>' + escHtml(err.message) + '</div>';
-        resultsListEl.appendChild(errCard);
-      }
-      done++;
-      batchProgressEl.textContent = 'Fetching ' + done + ' / ' + total + '...';
+    try {
+      const results = await fetchBatch(urls);
+      results.forEach((data, i) => {
+        if (data.error) {
+          const errCard = document.createElement('div');
+          errCard.className = 'result';
+          errCard.style.display = 'block';
+          errCard.innerHTML = '<div style="color:#ef4444;font-size:0.875rem"><strong>Failed:</strong> ' + escHtml(urls[i]) + '<br>' + escHtml(data.error) + '</div>';
+          resultsListEl.appendChild(errCard);
+        } else {
+          resultsListEl.appendChild(buildResultCard(data, data.pageUrl || urls[i]));
+        }
+      });
+      batchProgressEl.textContent = 'Done - ' + results.length + ' URLs processed.';
+    } catch (err) {
+      batchProgressEl.textContent = '';
+      errorEl.textContent = err.message;
+      errorEl.classList.add('visible');
     }
-    batchProgressEl.textContent = 'Done - ' + done + ' URLs processed.';
     goBtn.disabled = false;
   }
 }
@@ -1692,7 +1748,7 @@ export default {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
       });
@@ -1700,6 +1756,10 @@ export default {
 
     if (url.pathname === '/api/info') {
       return handleInfo(request);
+    }
+
+    if (url.pathname === '/api/batch' && request.method === 'POST') {
+      return handleBatch(request);
     }
 
     // Everything else serves the frontend
