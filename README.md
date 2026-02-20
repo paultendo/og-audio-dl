@@ -44,6 +44,7 @@ Features:
 - Installable as a PWA (Add to Home Screen)
 - WCAG 2.2 AA accessible
 - Rate limited (15 requests/min per IP)
+- Enhanced for Suno - artist, lyrics and cover art embedded as ID3 tags in downloaded MP3s
 
 ### API
 

@@ -1168,6 +1168,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
       <div class="result-info">
         <div class="result-title" id="result-title"></div>
         <div class="result-meta" id="result-meta"></div>
+        <div class="result-meta" id="result-suno-badge" style="display:none;color:#6ea8fe;font-size:0.75rem;margin-top:2px">Enhanced for Suno - artist, lyrics and cover art embedded</div>
       </div>
     </div>
     <audio class="result-audio" id="result-audio" controls preload="none" aria-label="Audio preview"></audio>
@@ -1388,6 +1389,9 @@ function showSingleResult(data, url) {
 
   currentAudioUrl = data.audioUrl;
   currentData = data;
+
+  const sunoBadge = document.getElementById('result-suno-badge');
+  sunoBadge.style.display = data.lyrics ? '' : 'none';
 
   const lyricsSection = document.getElementById('result-lyrics-section');
   if (data.lyrics) {
