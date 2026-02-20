@@ -118,4 +118,6 @@ See the full [terms of use](https://og-audio-dl.paultendo.workers.dev) on the li
 
 If you build something with this, I'd love to hear about it - drop me a message on [Buy Me a Coffee](https://buymeacoffee.com/paultendo) or open an [issue](https://github.com/paultendo/og-audio-dl/issues).
 
+If this is useful, consider [sponsoring on GitHub](https://github.com/sponsors/paultendo).
+
 Made by [paultendo](https://buymeacoffee.com/paultendo).

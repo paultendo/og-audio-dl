@@ -1340,6 +1340,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 
   <footer role="contentinfo">
     <a class="bmc" href="https://buymeacoffee.com/paultendo" target="_blank" rel="noopener">Buy me a coffee</a>
+    <a class="bmc" href="https://github.com/sponsors/paultendo" target="_blank" rel="noopener" style="background:#238636;color:#fff;margin-left:0.5rem">Sponsor on GitHub</a>
     <br><br>
     Built on the <a href="https://ogp.me" target="_blank" rel="noopener">Open Graph protocol</a>
     <br>
