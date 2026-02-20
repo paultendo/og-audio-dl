@@ -84,6 +84,20 @@ function extractTitle(html) {
 }
 
 /**
+ * Extract artist from meta description.
+ * Handles formats like:
+ *   "Title by Artist (@handle). ..."  (Suno)
+ *   "Title by Artist on ..."
+ */
+function extractArtist(html) {
+  const desc = extractMeta(html, 'description');
+  if (!desc) return null;
+  const match = desc.match(/\bby\s+([^(@]+?)(?:\s*\(@[^)]+\))?[.\s]+(Listen|on\s)/i);
+  if (match) return decodeEntities(match[1].trim()) || null;
+  return null;
+}
+
+/**
  * Guess file extension from a URL.
  */
 function guessExtension(url) {
@@ -199,10 +213,16 @@ async function extractAudioInfo(url) {
   // Get image if available
   const image = extractMeta(html, 'og:image');
 
-  const ext = guessExtension(audioUrl);
-  const filename = `${sanitiseFilename(title)}.${ext}`;
+  // Extract artist if available
+  const artist = extractArtist(html);
 
-  const result = { audioUrl, title, filename, image, sourceTag: foundTag, pageUrl: url };
+  const ext = guessExtension(audioUrl);
+  const filenameBase = artist
+    ? `${sanitiseFilename(artist)} - ${sanitiseFilename(title)}`
+    : sanitiseFilename(title);
+  const filename = `${filenameBase}.${ext}`;
+
+  const result = { audioUrl, title, artist, filename, image, sourceTag: foundTag, pageUrl: url };
   setCache(url, result);
   return result;
 }
@@ -300,6 +320,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/browser-id3-writer@4.4.0/dist/browser-id3-writer.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1202,6 +1223,7 @@ async function fetchOne(url) {
 }
 
 let currentAudioUrl = '';
+let currentData = null;
 
 function showSingleResult(data, url) {
   document.getElementById('result-title').textContent = data.title;
@@ -1217,19 +1239,49 @@ function showSingleResult(data, url) {
   fnInput.value = data.filename;
 
   currentAudioUrl = data.audioUrl;
+  currentData = data;
 
   resultEl.classList.add('visible');
   saveHistory(data, url);
 }
 
-async function clientDownload(audioUrl, filename, btn) {
+async function writeId3Tags(arrayBuffer, meta) {
+  try {
+    if (typeof ID3Writer === 'undefined') return null;
+    const writer = new ID3Writer(arrayBuffer);
+    if (meta.title) writer.setFrame('TIT2', meta.title);
+    if (meta.artist) writer.setFrame('TPE1', [meta.artist]);
+    if (meta.image) {
+      try {
+        const imgRes = await fetch(meta.image);
+        if (imgRes.ok) {
+          const imgBuf = await imgRes.arrayBuffer();
+          const mime = imgRes.headers.get('content-type') || 'image/jpeg';
+          writer.setFrame('APIC', { type: 3, data: imgBuf, description: 'Cover', useUnicodeEncoding: false, mimeType: mime });
+        }
+      } catch {}
+    }
+    writer.addTag();
+    return writer.arrayBuffer;
+  } catch {
+    return null;
+  }
+}
+
+async function clientDownload(audioUrl, filename, btn, meta) {
   const origText = btn.textContent;
   btn.textContent = 'Downloading...';
   btn.disabled = true;
   try {
     const res = await fetch(audioUrl);
     if (!res.ok) throw new Error('Download failed');
-    const blob = await res.blob();
+    let buf = await res.arrayBuffer();
+    // Write ID3 tags for MP3s if metadata available
+    if (meta && filename.endsWith('.mp3')) {
+      const tagged = await writeId3Tags(buf, meta);
+      if (tagged) buf = tagged;
+    }
+    const blob = new Blob([buf], { type: 'audio/mpeg' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = filename;
@@ -1257,7 +1309,7 @@ async function clientDownload(audioUrl, filename, btn) {
 function downloadCurrent() {
   const fn = document.getElementById('result-filename').value;
   const btn = document.getElementById('result-download');
-  clientDownload(currentAudioUrl, fn, btn);
+  clientDownload(currentAudioUrl, fn, btn, currentData);
 }
 
 function buildResultCard(data, url) {
@@ -1286,7 +1338,7 @@ function buildResultCard(data, url) {
 
   const fnInput = card.querySelector('.filename-input');
   const dlBtn = card.querySelector('.download-btn');
-  dlBtn.onclick = () => clientDownload(data.audioUrl, fnInput.value, dlBtn);
+  dlBtn.onclick = () => clientDownload(data.audioUrl, fnInput.value, dlBtn, data);
 
   saveHistory(data, url);
   return card;
