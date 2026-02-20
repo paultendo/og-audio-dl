@@ -165,7 +165,7 @@ function resolveSunoPromptToken(html, token) {
   return fallback ? fallback.trim() : null;
 }
 
-function extractSunoLyrics(html) {
+function extractSunoClipMeta(html) {
   const norm = normaliseSunoEscapes(html);
   const clipIdx = norm.indexOf('"clip":{');
   if (clipIdx === -1) return null;
@@ -176,26 +176,50 @@ function extractSunoLyrics(html) {
   try {
     const clip = JSON.parse(clipJson);
     const meta = (clip.metadata && typeof clip.metadata === 'object') ? clip.metadata : {};
+
+    // Resolve lyrics
     const displayed = (clip.displayed_lyrics || meta.displayed_lyrics || '').trim() || null;
+    let lyrics = null;
     if (displayed && !/^\$\d+$/.test(displayed) && !/^\[instrumental\]$/i.test(displayed)) {
-      return displayed.slice(0, 20000);
+      lyrics = displayed.slice(0, 20000);
+    } else {
+      const prompt = (meta.prompt || '').trim() || null;
+      if (prompt && !/^\[instrumental\]$/i.test(prompt)) {
+        const resolved = /^\$\d+$/.test(prompt) ? resolveSunoPromptToken(html, prompt) : prompt;
+        if (resolved && !/^\$\d+$/.test(resolved)) lyrics = resolved.slice(0, 20000);
+      }
     }
-    const prompt = (meta.prompt || '').trim() || null;
-    if (!prompt) return null;
-    if (/^\[instrumental\]$/i.test(prompt)) return null;
-    const resolved = /^\$\d+$/.test(prompt) ? resolveSunoPromptToken(html, prompt) : prompt;
-    if (!resolved || /^\$\d+$/.test(resolved)) return null;
-    return resolved.slice(0, 20000);
+
+    // Style prompt (full tags string - the creative brief)
+    const styleTags = (meta.tags || '').trim() || null;
+
+    // Display tags (short cleaned genre list)
+    const displayTags = (clip.display_tags || '').trim() || null;
+
+    // Created date (ISO string -> YYYY-MM-DD for ID3 TDRC)
+    let year = null;
+    if (clip.created_at) {
+      const d = new Date(clip.created_at);
+      if (!isNaN(d)) year = d.getFullYear().toString();
+    }
+
+    // Duration in ms for ID3 TLEN
+    const durationMs = typeof meta.duration === 'number' ? Math.round(meta.duration * 1000) : null;
+
+    // Model version
+    const model = clip.major_model_version || null;
+
+    return { lyrics, styleTags, displayTags, year, durationMs, model };
   } catch {
     return null;
   }
 }
 
 /**
- * Fetch Suno embed page and extract lyrics for a given song URL.
+ * Fetch Suno embed page and extract rich metadata for a given song URL.
  * Only attempted for suno.com URLs.
  */
-async function fetchSunoLyrics(pageUrl) {
+async function fetchSunoMeta(pageUrl) {
   try {
     const u = new URL(pageUrl);
     if (u.hostname !== 'suno.com' && u.hostname !== 'www.suno.com') return null;
@@ -208,7 +232,7 @@ async function fetchSunoLyrics(pageUrl) {
     });
     if (!res.ok) return null;
     const html = await res.text();
-    return extractSunoLyrics(html);
+    return extractSunoClipMeta(html);
   } catch {
     return null;
   }
@@ -333,8 +357,14 @@ async function extractAudioInfo(url) {
   // Extract artist if available
   const artist = extractArtist(html);
 
-  // Extract lyrics (Suno only - fetches embed page in parallel-ish)
-  const lyrics = await fetchSunoLyrics(url);
+  // Fetch Suno-specific rich metadata (embed page)
+  const sunoMeta = await fetchSunoMeta(url);
+  const lyrics = sunoMeta?.lyrics ?? null;
+  const styleTags = sunoMeta?.styleTags ?? null;
+  const displayTags = sunoMeta?.displayTags ?? null;
+  const year = sunoMeta?.year ?? null;
+  const durationMs = sunoMeta?.durationMs ?? null;
+  const model = sunoMeta?.model ?? null;
 
   const ext = guessExtension(audioUrl);
   const filenameBase = artist
@@ -342,7 +372,7 @@ async function extractAudioInfo(url) {
     : sanitiseFilename(title);
   const filename = `${filenameBase}.${ext}`;
 
-  const result = { audioUrl, title, artist, lyrics, filename, image, sourceTag: foundTag, pageUrl: url };
+  const result = { audioUrl, title, artist, lyrics, styleTags, displayTags, year, durationMs, model, filename, image, sourceTag: foundTag, pageUrl: url };
   setCache(url, result);
   return result;
 }
@@ -1168,7 +1198,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
       <div class="result-info">
         <div class="result-title" id="result-title"></div>
         <div class="result-meta" id="result-meta"></div>
-        <div class="result-meta" id="result-suno-badge" style="display:none;color:#6ea8fe;font-size:0.75rem;margin-top:2px">Enhanced for Suno - artist, lyrics and cover art embedded</div>
+        <div class="result-meta" id="result-suno-badge" style="display:none;color:#6ea8fe;font-size:0.75rem;margin-top:2px">Enhanced for Suno - metadata embedded in file</div>
       </div>
     </div>
     <audio class="result-audio" id="result-audio" controls preload="none" aria-label="Audio preview"></audio>
@@ -1180,6 +1210,10 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     <details class="lyrics-section" id="result-lyrics-section" style="display:none">
       <summary>Lyrics</summary>
       <pre class="lyrics-text" id="result-lyrics"></pre>
+    </details>
+    <details class="lyrics-section" id="result-style-section" style="display:none">
+      <summary>Style prompt</summary>
+      <p class="lyrics-text" id="result-style"></p>
     </details>
   </div>
 
@@ -1390,8 +1424,18 @@ function showSingleResult(data, url) {
   currentAudioUrl = data.audioUrl;
   currentData = data;
 
+  const hasSunoMeta = data.lyrics || data.styleTags || data.displayTags || data.year;
   const sunoBadge = document.getElementById('result-suno-badge');
-  sunoBadge.style.display = data.lyrics ? '' : 'none';
+  if (hasSunoMeta) {
+    const parts = [];
+    if (data.displayTags) parts.push(data.displayTags);
+    if (data.year) parts.push(data.year);
+    if (data.model) parts.push(data.model);
+    sunoBadge.textContent = 'Suno' + (parts.length ? ' - ' + parts.join(' - ') : '');
+    sunoBadge.style.display = '';
+  } else {
+    sunoBadge.style.display = 'none';
+  }
 
   const lyricsSection = document.getElementById('result-lyrics-section');
   if (data.lyrics) {
@@ -1399,6 +1443,14 @@ function showSingleResult(data, url) {
     lyricsSection.style.display = '';
   } else {
     lyricsSection.style.display = 'none';
+  }
+
+  const styleSection = document.getElementById('result-style-section');
+  if (data.styleTags) {
+    document.getElementById('result-style').textContent = data.styleTags;
+    styleSection.style.display = '';
+  } else {
+    styleSection.style.display = 'none';
   }
 
   resultEl.classList.add('visible');
@@ -1412,6 +1464,11 @@ async function writeId3Tags(arrayBuffer, meta) {
     if (meta.title) writer.setFrame('TIT2', meta.title);
     if (meta.artist) writer.setFrame('TPE1', [meta.artist]);
     if (meta.lyrics) writer.setFrame('USLT', { description: '', lyrics: meta.lyrics, language: 'eng' });
+    if (meta.displayTags) writer.setFrame('TCON', [meta.displayTags]);
+    if (meta.year) writer.setFrame('TYER', meta.year);
+    if (meta.durationMs) writer.setFrame('TLEN', meta.durationMs);
+    if (meta.styleTags) writer.setFrame('COMM', { description: 'Style prompt', text: meta.styleTags, language: 'eng' });
+    if (meta.model) writer.setFrame('TSSE', 'Suno ' + meta.model);
     if (meta.image) {
       try {
         const imgRes = await fetch(meta.image);
