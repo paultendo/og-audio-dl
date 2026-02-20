@@ -1168,7 +1168,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 <a href="#main-content" class="skip-link">Skip to content</a>
 <main id="main-content" class="container" role="main">
   <h1>og-audio-dl</h1>
-  <p class="subtitle">Download audio from any webpage that uses Open Graph metadata. Suno downloads include artist, lyrics and cover art embedded in the file.</p>
+  <p class="subtitle">Download audio from any webpage that uses Open Graph metadata. Suno downloads include artist, lyrics, style prompt, genre, year and cover art embedded as ID3 tags in the file.</p>
 
   <div class="agree-row">
     <input type="checkbox" id="agree" aria-describedby="agree-desc">

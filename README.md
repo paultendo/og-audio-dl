@@ -44,7 +44,7 @@ Features:
 - Installable as a PWA (Add to Home Screen)
 - WCAG 2.2 AA accessible
 - Rate limited (15 requests/min per IP)
-- Enhanced for Suno - artist, lyrics and cover art embedded as ID3 tags in downloaded MP3s
+- Enhanced for Suno - artist, lyrics, style prompt, genre, year, cover art and model version embedded as ID3 tags in downloaded MP3s
 
 ### API
 
@@ -58,8 +58,15 @@ Returns JSON:
 {
   "audioUrl": "https://cdn.example.com/track.mp3",
   "title": "Artist - Track Name",
+  "artist": "Artist",
   "filename": "Artist - Track Name.mp3",
   "image": "https://cdn.example.com/artwork.jpg",
+  "lyrics": "Verse 1\n...",
+  "styleTags": "uk trap, grime, aggressive",
+  "displayTags": "UK trap, London rap",
+  "year": "2025",
+  "durationMs": 187000,
+  "model": "v5",
   "sourceTag": "og:audio",
   "pageUrl": "https://example.com/some-song-page"
 }
