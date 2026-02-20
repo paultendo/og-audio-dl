@@ -38,7 +38,9 @@ The web app runs as a [Cloudflare Worker](https://workers.cloudflare.com/) - no 
 Features:
 
 - Single or batch URL lookup (one per line)
+- Paste a Suno playlist URL to load all tracks at once
 - Editable filename before download
+- Metadata sidecar button - save lyrics, style prompt and tags as a .txt file
 - Audio preview player
 - Recent history (stored locally in your browser)
 - Installable as a PWA (Add to Home Screen)
