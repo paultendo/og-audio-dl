@@ -641,8 +641,11 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 
   body {
     font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #0a0a0a;
-    color: #e0e0e0;
+    background: #090e17;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(30,215,96,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(30,100,215,0.06) 0%, transparent 60%);
+    color: #eef4ff;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -668,7 +671,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .subtitle {
-    color: #888;
+    color: #bcc9df;
     font-size: 0.875rem;
     margin-bottom: 2rem;
     line-height: 1.5;
@@ -683,63 +686,68 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   input[type="url"] {
     flex: 1;
     padding: 0.75rem 1rem;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: rgba(8, 14, 24, 0.58);
+    border: 1px solid rgba(203, 222, 255, 0.2);
     border-radius: 8px;
-    color: #fff;
+    color: #ecf4ff;
     font-size: 0.9375rem;
     outline: none;
     transition: border-color 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
   }
 
   input[type="url"]:focus {
-    border-color: #555;
+    border-color: rgba(30, 215, 96, 0.58);
   }
 
   input[type="url"]::placeholder {
-    color: #8a8a8a;
+    color: rgba(210, 224, 247, 0.45);
   }
 
   button {
     padding: 0.75rem 1.25rem;
-    background: #fff;
-    color: #000;
+    background: linear-gradient(135deg, #1ed760, #4bf07e);
+    color: #04120a;
     border: none;
     border-radius: 8px;
+    font-family: inherit;
     font-size: 0.9375rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: filter 0.15s, box-shadow 0.15s;
     white-space: nowrap;
+    box-shadow: 0 8px 20px -8px rgba(30,215,96,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
   }
 
-  button:hover { opacity: 0.85; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:hover { filter: brightness(1.06); box-shadow: 0 10px 26px -8px rgba(30,215,96,0.65), inset 0 1px 0 rgba(255,255,255,0.2); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; filter: none; box-shadow: none; }
 
   /* Focus indicators - WCAG 2.4.7 / 2.4.11 */
   :focus-visible {
-    outline: 2px solid #6ea8fe;
+    outline: 2px solid rgba(30, 215, 96, 0.6);
     outline-offset: 2px;
   }
   textarea:focus-visible, input:focus-visible {
     outline: none;
-    border-color: #6ea8fe;
-    box-shadow: 0 0 0 1px #6ea8fe;
+    border-color: rgba(30, 215, 96, 0.58);
+    box-shadow: 0 0 0 1px rgba(30, 215, 96, 0.3);
   }
   .agree-row input[type="checkbox"]:focus-visible {
-    outline: 2px solid #6ea8fe;
+    outline: 2px solid rgba(30, 215, 96, 0.6);
     outline-offset: 2px;
     box-shadow: none;
   }
 
   .result {
     display: none;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: rgba(8, 14, 24, 0.72);
+    border: 1px solid rgba(203, 222, 255, 0.15);
     border-radius: 12px;
     padding: 1.25rem;
     margin-top: 1rem;
     animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   }
 
   @keyframes fadeIn {
@@ -761,7 +769,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     height: 80px;
     border-radius: 8px;
     object-fit: cover;
-    background: #333;
+    background: rgba(255,255,255,0.08);
     flex-shrink: 0;
   }
 
@@ -778,7 +786,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .result-meta {
-    color: #888;
+    color: #9eaeca;
     font-size: 0.8125rem;
   }
 
@@ -797,20 +805,22 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .download-btn {
     flex: 1;
     padding: 0.875rem;
-    background: #2563eb;
-    color: #fff;
+    background: linear-gradient(135deg, #1ed760, #4bf07e);
+    color: #04120a;
     border-radius: 8px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     text-align: center;
     text-decoration: none;
     display: block;
+    box-shadow: 0 6px 16px -6px rgba(30,215,96,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
   }
 
   .meta-btn {
     padding: 0.875rem 1rem;
-    background: #27272a;
-    color: #a1a1aa;
+    background: transparent;
+    color: #bcc9df;
+    border: 1px solid rgba(203, 222, 255, 0.22);
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
@@ -818,30 +828,30 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     flex-shrink: 0;
   }
 
-  .meta-btn:hover { background: #3f3f46; color: #e4e4e7; }
+  .meta-btn:hover { background: rgba(11, 18, 29, 0.52); border-color: rgba(203, 222, 255, 0.34); color: #eef4ff; }
 
-  .download-btn:hover { opacity: 0.85; }
+  .download-btn:hover { filter: brightness(1.06); }
 
   .lyrics-section {
     margin-top: 0.75rem;
-    border-top: 1px solid #222;
+    border-top: 1px solid rgba(203, 222, 255, 0.1);
     padding-top: 0.75rem;
   }
 
   .lyrics-section summary {
     cursor: pointer;
     font-size: 0.875rem;
-    color: #888;
+    color: #9eaeca;
     user-select: none;
   }
 
-  .lyrics-section summary:hover { color: #aaa; }
+  .lyrics-section summary:hover { color: #bcc9df; }
 
   .lyrics-text {
     margin-top: 0.75rem;
     font-family: inherit;
     font-size: 0.875rem;
-    color: #ccc;
+    color: #cad5e6;
     white-space: pre-wrap;
     line-height: 1.6;
   }
@@ -859,7 +869,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     display: none;
     text-align: center;
     padding: 2rem 0;
-    color: #888;
+    color: #9eaeca;
   }
 
   .loading.visible { display: block; }
@@ -868,8 +878,8 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 2px solid #333;
-    border-top-color: #888;
+    border: 2px solid rgba(203, 222, 255, 0.12);
+    border-top-color: #1ed760;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
     margin-right: 0.5rem;
@@ -936,14 +946,14 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .share-card {
     margin-top: 1.25rem;
     padding: 1.25rem;
-    background: #1a1a1a;
-    border: 1px solid #282828;
+    background: rgba(8, 14, 24, 0.5);
+    border: 1px solid rgba(203, 222, 255, 0.12);
     border-radius: 12px;
     text-align: center;
   }
 
   .share-card p {
-    color: #888;
+    color: #9eaeca;
     font-size: 0.8125rem;
     margin-bottom: 0.875rem;
   }
@@ -960,21 +970,23 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     align-items: center;
     gap: 0.375rem;
     padding: 0.5rem 0.875rem;
-    background: #252525;
-    border: 1px solid #333;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    color: #ccc;
+    color: #bcc9df;
     font-size: 0.8125rem;
     text-decoration: none;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
     font-family: inherit;
+    box-shadow: none;
   }
 
   .share-links a:hover, .share-links button:hover {
-    background: #303030;
-    border-color: #444;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #eef4ff;
+    filter: none;
   }
 
   .share-links svg {
@@ -985,8 +997,8 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .share-links .copied {
-    color: #4ade80;
-    border-color: #4ade80;
+    color: #1ed760;
+    border-color: rgba(30, 215, 96, 0.4);
   }
 
   .bmc {
@@ -1007,72 +1019,73 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   footer {
     margin-top: 3rem;
     text-align: center;
-    color: #8a8a8a;
+    color: #6b7a94;
     font-size: 0.75rem;
     line-height: 1.8;
   }
 
   footer a {
-    color: #888;
+    color: #7a8ba8;
     text-decoration: none;
   }
 
-  footer a:hover { color: #aaa; }
+  footer a:hover { color: #bcc9df; }
 
   .section {
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #222;
+    border-top: 1px solid rgba(203, 222, 255, 0.08);
   }
 
   .section h2 {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #aaa;
+    color: #bcc9df;
     margin-bottom: 0.5rem;
     letter-spacing: -0.01em;
   }
 
   .section p {
-    color: #8a8a8a;
+    color: #9eaeca;
     font-size: 0.8125rem;
     line-height: 1.6;
     margin-bottom: 0.5rem;
   }
 
   .section a {
-    color: #aaa;
+    color: #bcc9df;
     text-decoration: underline;
-    text-decoration-color: #444;
+    text-decoration-color: rgba(203, 222, 255, 0.25);
     text-underline-offset: 2px;
   }
 
   .section a:hover {
-    color: #ccc;
-    text-decoration-color: #666;
+    color: #eef4ff;
+    text-decoration-color: rgba(203, 222, 255, 0.5);
   }
 
   .section code {
-    background: #1a1a1a;
+    background: rgba(203, 222, 255, 0.06);
     padding: 0.15em 0.4em;
     border-radius: 4px;
     font-size: 0.8em;
-    color: #999;
+    color: #9eaeca;
   }
 
   .terms-toggle {
     background: none;
     border: none;
-    color: #8a8a8a;
+    color: #7a8ba8;
     font-size: 0.8125rem;
     cursor: pointer;
     padding: 0.25rem 0;
     text-decoration: underline;
-    text-decoration-color: #555;
+    text-decoration-color: rgba(203, 222, 255, 0.2);
     text-underline-offset: 2px;
+    box-shadow: none;
   }
 
-  .terms-toggle:hover { color: #bbb; }
+  .terms-toggle:hover { color: #bcc9df; filter: none; box-shadow: none; }
 
   .terms-content {
     display: none;
@@ -1082,7 +1095,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .terms-content.visible { display: block; }
 
   .terms-content p {
-    color: #929292;
+    color: #7a8ba8;
     font-size: 0.75rem;
     line-height: 1.7;
     margin-bottom: 0.75rem;
@@ -1101,9 +1114,9 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     width: 24px;
     height: 24px;
     min-width: 24px;
-    border: 1px solid #444;
+    border: 1px solid rgba(203, 222, 255, 0.2);
     border-radius: 4px;
-    background: #1a1a1a;
+    background: rgba(8, 14, 24, 0.58);
     cursor: pointer;
     margin-top: 0;
     position: relative;
@@ -1111,8 +1124,8 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .agree-row input[type="checkbox"]:checked {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: #1ed760;
+    border-color: #1ed760;
   }
 
   .agree-row input[type="checkbox"]:checked::after {
@@ -1122,13 +1135,13 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     top: 3px;
     width: 6px;
     height: 11px;
-    border: solid #fff;
+    border: solid #04120a;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
 
   .agree-row label {
-    color: #8a8a8a;
+    color: #9eaeca;
     font-size: 0.8125rem;
     line-height: 1.4;
     cursor: pointer;
@@ -1136,23 +1149,23 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .agree-row label a {
-    color: #aaa;
+    color: #bcc9df;
     text-decoration: underline;
-    text-decoration-color: #444;
+    text-decoration-color: rgba(203, 222, 255, 0.25);
     text-underline-offset: 2px;
   }
 
   .agree-row label a:hover {
-    color: #ccc;
+    color: #eef4ff;
   }
 
   textarea {
     flex: 1;
     padding: 0.75rem 1rem;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: rgba(8, 14, 24, 0.58);
+    border: 1px solid rgba(203, 222, 255, 0.2);
     border-radius: 8px;
-    color: #fff;
+    color: #ecf4ff;
     font-size: 0.9375rem;
     font-family: inherit;
     outline: none;
@@ -1161,13 +1174,14 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     min-height: 42px;
     max-height: 200px;
     line-height: 1.4;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
   }
 
-  textarea:focus { border-color: #555; }
-  textarea::placeholder { color: #8a8a8a; }
+  textarea:focus { border-color: rgba(30, 215, 96, 0.58); }
+  textarea::placeholder { color: rgba(210, 224, 247, 0.45); }
 
   .batch-hint {
-    color: #8a8a8a;
+    color: #6b7a94;
     font-size: 0.75rem;
     margin-top: -0.5rem;
     margin-bottom: 1rem;
@@ -1182,17 +1196,17 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .filename-input {
     flex: 1;
     padding: 0.5rem 0.75rem;
-    background: #111;
-    border: 1px solid #333;
+    background: rgba(8, 14, 24, 0.58);
+    border: 1px solid rgba(203, 222, 255, 0.15);
     border-radius: 6px;
-    color: #ccc;
+    color: #bcc9df;
     font-size: 0.8125rem;
     font-family: inherit;
     outline: none;
     transition: border-color 0.2s;
   }
 
-  .filename-input:focus { border-color: #555; }
+  .filename-input:focus { border-color: rgba(30, 215, 96, 0.5); }
 
   .results-list {
     display: none;
@@ -1211,7 +1225,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     display: none;
     text-align: center;
     padding: 1rem 0;
-    color: #888;
+    color: #9eaeca;
     font-size: 0.875rem;
   }
 
@@ -1220,7 +1234,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .history-section {
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #222;
+    border-top: 1px solid rgba(203, 222, 255, 0.08);
     display: none;
   }
 
@@ -1230,7 +1244,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
     font-family: 'Syne', sans-serif;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #aaa;
+    color: #bcc9df;
     margin-bottom: 0.75rem;
     letter-spacing: -0.01em;
     display: flex;
@@ -1241,28 +1255,29 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   .history-clear {
     background: none;
     border: none;
-    color: #8a8a8a;
+    color: #6b7a94;
     font-size: 0.75rem;
     cursor: pointer;
     padding: 0.25rem 0;
+    box-shadow: none;
   }
 
-  .history-clear:hover { color: #bbb; }
+  .history-clear:hover { color: #bcc9df; filter: none; box-shadow: none; }
 
   .history-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.625rem;
-    background: #1a1a1a;
-    border: 1px solid #282828;
+    background: rgba(8, 14, 24, 0.5);
+    border: 1px solid rgba(203, 222, 255, 0.1);
     border-radius: 8px;
     margin-bottom: 0.5rem;
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
 
-  .history-item:hover { border-color: #444; }
+  .history-item:hover { border-color: rgba(203, 222, 255, 0.22); background: rgba(8, 14, 24, 0.7); }
 
   .history-item img {
     width: 40px;
@@ -1279,7 +1294,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .history-item .history-title {
-    color: #ddd;
+    color: #d8e2f3;
     font-size: 0.8125rem;
     font-weight: 500;
     white-space: nowrap;
@@ -1288,7 +1303,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
   }
 
   .history-item .history-url {
-    color: #929292;
+    color: #6b7a94;
     font-size: 0.6875rem;
     white-space: nowrap;
     overflow: hidden;
@@ -1325,7 +1340,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 <a href="#main-content" class="skip-link">Skip to content</a>
 <main id="main-content" class="container" role="main">
   <h1>og-audio-dl</h1>
-  <p class="subtitle">Download audio from any webpage that uses Open Graph metadata. Paste a Suno playlist URL to download all tracks at once. Suno downloads include artist, lyrics, style prompt, genre, year and cover art embedded as ID3 tags - or save as a metadata sidecar file.</p>
+  <p class="subtitle">Download audio from any webpage that publishes <code>og:audio</code> metadata. Works with Suno and any other site that uses Open Graph tags. Paste a Suno playlist URL to download all tracks at once, with artist, lyrics, style prompt, genre, year and cover art embedded as ID3 tags.</p>
 
   <div class="agree-row">
     <input type="checkbox" id="agree" aria-describedby="agree-desc">
@@ -1334,10 +1349,10 @@ const FRONTEND_HTML = `<!DOCTYPE html>
 
   <div class="input-group" role="search">
     <label for="url" class="sr-only">Paste one or more song page URLs</label>
-    <textarea id="url" placeholder="Paste a song page URL..." autocomplete="off" spellcheck="false" disabled rows="1" aria-describedby="batch-hint"></textarea>
+    <textarea id="url" placeholder="Paste a song or playlist URL..." autocomplete="off" spellcheck="false" disabled rows="1" aria-describedby="batch-hint"></textarea>
     <button id="go" onclick="lookup()" disabled aria-label="Fetch audio metadata">Fetch</button>
   </div>
-  <p class="batch-hint" id="batch-hint">Paste multiple URLs (one per line) to batch download.</p>
+  <p class="batch-hint" id="batch-hint">Paste multiple URLs (one per line) to batch download. Suno playlist URLs download all tracks at once.</p>
 
   <div class="error" id="error" role="alert" aria-live="assertive"></div>
 
@@ -1364,7 +1379,7 @@ const FRONTEND_HTML = `<!DOCTYPE html>
       <input class="filename-input" type="text" id="result-filename" spellcheck="false" aria-label="Edit filename before download">
     </div>
     <div class="download-btn-row">
-      <button class="download-btn" id="result-download" onclick="downloadCurrent()">Download</button>
+      <button class="download-btn" id="result-download" onclick="downloadCurrent()">Download MP3</button>
       <button class="meta-btn" id="result-metadata" onclick="downloadCurrentMetadata()">Metadata</button>
     </div>
     <details class="lyrics-section" id="result-lyrics-section" style="display:none">
@@ -1723,7 +1738,7 @@ function downloadMetadata(meta, baseFilename) {
     lines.push('Lyrics:');
     lines.push(meta.lyrics);
   }
-  const txt = lines.join('\n');
+  const txt = lines.join('\\n');
   const blob = new Blob([txt], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1757,7 +1772,7 @@ function buildResultCard(data, url) {
       '<input class="filename-input" type="text" value="' + escHtml(data.filename) + '" spellcheck="false" aria-label="Filename for ' + escHtml(data.title) + '">' +
     '</div>' +
     '<div class="download-btn-row">' +
-      '<button class="download-btn" aria-label="Download ' + escHtml(data.title) + '">Download</button>' +
+      '<button class="download-btn" aria-label="Download ' + escHtml(data.title) + '">Download MP3</button>' +
       '<button class="meta-btn" aria-label="Download metadata for ' + escHtml(data.title) + '">Metadata</button>' +
     '</div>';
 
@@ -1772,12 +1787,12 @@ function buildResultCard(data, url) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\\r/g,'').replace(/\\n/g,' ');
 }
 
 function isSunoPlaylistUrl(url) {
   try {
-    const u = new URL(/^https?:\/\//i.test(url) ? url : 'https://' + url);
+    const u = new URL(/^https?:\\/\\//i.test(url) ? url : 'https://' + url);
     return (u.hostname === 'suno.com' || u.hostname === 'www.suno.com') && u.pathname.startsWith('/playlist/');
   } catch { return false; }
 }
@@ -1876,7 +1891,8 @@ function getHistory() {
 
 function saveHistory(data, url) {
   const history = getHistory().filter(h => h.pageUrl !== url);
-  history.unshift({ title: data.title, image: data.image || '', pageUrl: url, time: Date.now() });
+  const title = (data.title || '').replace(/[\\r\\n]+/g, ' ').trim();
+  history.unshift({ title, image: data.image || '', pageUrl: url, time: Date.now() });
   if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   renderHistory();
