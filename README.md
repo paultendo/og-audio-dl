@@ -116,7 +116,7 @@ See the full [terms of use](https://og-audio-dl.paultendo.workers.dev) on the li
 
 ## Licence
 
-[MIT](LICENSE) - do what you want, just keep the copyright notice.
+[Apache 2.0](LICENSE) - free to use, adapt, and self-host. Attribution required in derivative works.
 
 If you build something with this, I'd love to hear about it - drop me a message on [Buy Me a Coffee](https://buymeacoffee.com/paultendo) or open an [issue](https://github.com/paultendo/og-audio-dl/issues).
 
