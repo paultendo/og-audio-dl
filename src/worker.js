@@ -1899,7 +1899,7 @@ function renderHistory() {
 
   section.classList.add('visible');
   list.innerHTML = history.map(h =>
-    '<div class="history-item" role="listitem" tabindex="0" aria-label="' + escHtml(h.title) + '" onclick="urlInput.value=\\'' + escHtml(h.pageUrl).replace(/'/g, "\\\\'") + '\\';lookup()" onkeydown="if(event.key===\\'Enter\\'){urlInput.value=\\'' + escHtml(h.pageUrl).replace(/'/g, "\\\\'") + '\\';lookup()}">' +
+    '<div class="history-item" role="listitem" tabindex="0" aria-label="' + escHtml(h.title) + '" data-url="' + escHtml(h.pageUrl) + '">' +
       (h.image ? '<img src="' + escHtml(h.image) + '" alt="' + escHtml(h.title) + ' artwork">' : '') +
       '<div class="history-info">' +
         '<div class="history-title">' + escHtml(h.title) + '</div>' +
@@ -1907,6 +1907,12 @@ function renderHistory() {
       '</div>' +
     '</div>'
   ).join('');
+
+  list.querySelectorAll('.history-item').forEach(item => {
+    const handler = () => { urlInput.value = item.dataset.url; lookup(); };
+    item.addEventListener('click', handler);
+    item.addEventListener('keydown', (e) => { if (e.key === 'Enter') handler(); });
+  });
 }
 
 renderHistory();
